@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projet Généalogie Sahraouie - FamilySearch</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #008000;
+            --accent-color: #ff0000;
+            --light-color: #ecf0f1;
+            --dark-color: #1a252f;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header avec image d'arrière-plan */
+        header {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1548013146-72479768bada?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            padding: 2rem;
+            background: rgba(44, 62, 80, 0.85);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .flag-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .saharawi-flag {
+            width: 300px;
+            height: 200px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(to bottom, 
+                #000000 0%, 
+                #000000 33%, 
+                #ffffff 33%, 
+                #ffffff 66%, 
+                #008000 66%, 
+                #008000 100%);
+            position: relative;
+            overflow: hidden;
+            border: 3px solid white;
+        }
+
+        .saharawi-flag::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle at center, #ff0000 40%, transparent 40%);
+        }
+
+        .saharawi-flag::before {
+            content: '☪';
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            transform: translateY(-50%);
+            font-size: 60px;
+            color: #ffffff;
+            z-index: 2;
+        }
+
+        .familysearch-logo {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .familysearch-logo img {
+            width: 250px;
+            height: auto;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 4px;
+            background: var(--secondary-color);
+            bottom: -10px;
+            left: 20%;
+            border-radius: 2px;
+        }
+
+        .subtitle {
+            font-size: 1.4rem;
+            opacity: 0.95;
+            margin-bottom: 2rem;
+            color: #ecf0f1;
+        }
+
+        .project-info {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+        }
+
+        /* Sections principales */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        section {
+            padding: 5rem 0;
+            border-bottom: 1px solid #eaeaea;
+        }
+
+        section:nth-child(even) {
+            background-color: white;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            gap: 15px;
+        }
+
+        .section-icon {
+            background: var(--secondary-color);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 3px;
+            background: var(--accent-color);
+            bottom: 0;
+            left: 0;
+        }
+
+        /* Carte */
+        .map-section {
+            background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
+                        url('https://images.unsplash.com/photo-1548013146-72479768bada?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            padding: 5rem 0;
+        }
+
+        .map-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+        }
+
+        #saharaMap {
+            height: 500px;
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 5px solid white;
+        }
+
+        .map-info {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-info h3 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .tribal-locations {
+            list-style: none;
+            margin-top: 1.5rem;
+        }
+
+        .tribal-locations li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tribal-locations li i {
+            color: var(--secondary-color);
+        }
+
+        /* Cartes et contenus */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+            border-left: 8px solid var(--secondary-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--accent-color), var(--secondary-color));
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h3 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.5rem;
+        }
+
+        .card-icon {
+            color: var(--secondary-color);
+            font-size: 1.8rem;
+        }
+
+        .objective-list {
+            list-style-type: none;
+        }
+
+        .objective-list li {
+            padding: 1rem 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .objective-list li:hover {
+            background-color: #f8f9fa;
+            padding-left: 10px;
+        }
+
+        .objective-list li:last-child {
+            border-bottom: none;
+        }
+
+        .objective-list i {
+            color: var(--success-color);
+            margin-top: 5px;
+            font-size: 1.2rem;
+        }
+
+        /* Tableau */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: linear-gradient(to right, var(--primary-color), var(--dark-color));
+            color: white;
+        }
+
+        th, td {
+            padding: 1.2rem;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:hover {
+            background-color: #e8f4fd;
+            transform: scale(1.01);
+            transition: all 0.3s ease;
+        }
+
+        /* Méthodologie */
+        .timeline {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .timeline::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            background: linear-gradient(to bottom, var(--secondary-color), var(--accent-color));
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            margin-left: -3px;
+            border-radius: 3px;
+        }
+
+        .timeline-item {
+            padding: 10px 50px;
+            position: relative;
+            width: 50%;
+            box-sizing: border-box;
+            margin-bottom: 3rem;
+        }
+
+        .timeline-item:nth-child(odd) {
+            left: 0;
+        }
+
+        .timeline-item:nth-child(even) {
+            left: 50%;
+        }
+
+        .timeline-content {
+            padding: 2rem;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-top: 5px solid var(--secondary-color);
+            position: relative;
+        }
+
+        .timeline-content::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            top: 50%;
+            transform: translateY(-50%);
+            right: -60px;
+            z-index: 2;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content::before {
+            left: -60px;
+            right: auto;
+        }
+
+        .timeline-content h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+        }
+
+        /* Tribus */
+        .tribes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .tribe-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            border-top: 8px solid var(--warning-color);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tribe-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #f39c12, #e74c3c);
+        }
+
+        .tribe-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .tribe-card h4 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tribe-card ul {
+            list-style-type: none;
+            margin-top: 1.5rem;
+        }
+
+        .tribe-card li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Partenariats */
+        .partners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .partner-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .partner-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, var(--secondary-color), var(--accent-color));
+        }
+
+        .partner-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--secondary-color);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .partner-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            padding: 1rem;
+            background: rgba(0, 128, 0, 0.1);
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(to right, var(--primary-color), var(--dark-color));
+            color: white;
+            padding: 4rem 0 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin: 2.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .contact-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .copyright {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0.8;
+        }
+
+        /* Animation pour le drapeau */
+        @keyframes wave {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(1deg) scale(1.02); }
+            50% { transform: rotate(0deg) scale(1); }
+            75% { transform: rotate(-1deg) scale(1.02); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+
+        .saharawi-flag {
+            animation: wave 10s infinite ease-in-out;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            h2 {
+                font-size: 1.8rem;
+            }
+            
+            .flag-container {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .saharawi-flag {
+                width: 250px;
+                height: 167px;
+            }
+            
+            .map-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            #saharaMap {
+                height: 400px;
+            }
+            
+            .project-info {
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+            
+            .timeline::after {
+                left: 31px;
+            }
+            
+            .timeline-item {
+                width: 100%;
+                padding-left: 80px;
+                padding-right: 25px;
+            }
+            
+            .timeline-item:nth-child(even) {
+                left: 0;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .tribes-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Style de la légende de la carte */
+        .map-legend {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête avec drapeau et photo en arrière-plan -->
+    <header>
+        <div class="header-content">
+            <div class="flag-container">
+                <div class="saharawi-flag"></div>
+                <div class="familysearch-logo">
+                    <div style="font-size: 2.5rem; color: #2c3e50; font-weight: bold; text-align: center;">
+                        <i class="fas fa-tree" style="color: #008000;"></i>
+                        FamilySearch
+                    </div>
+                </div>
+            </div>
+            
+            <h1>Projet de Recherche Généalogique Sahraouie</h1>
+            <p class="subtitle">Préservation et Numérisation des Archives Généalogiques du Sahara Occidental</p>
+            
+            <div class="project-info">
+                <div class="info-item">
+                    <i class="fas fa-building"></i>
+                    <span><strong>Porteur :</strong> FamilySearch International</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-user-tie"></i>
+                    <span><strong>Responsable :</strong> Karim Assoud</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span><strong>Région :</strong> Sahara Occidental</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section Carte interactive -->
+    <section class="map-section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-map-marked-alt"></i>
+                </div>
+                <h2>Carte des Zones Tribales du Sahara Occidental</h2>
+            </div>
+            
+            <div class="map-container">
+                <div id="saharaMap"></div>
+                
+                <div class="map-info">
+                    <h3><i class="fas fa-info-circle"></i> Répartition Tribale Historique</h3>
+                    <p>Cette carte interactive montre la répartition traditionnelle des principales tribus sahraouies avant 1975, basée sur les documents d'archives espagnols et les études anthropologiques.</p>
+                    
+                    <ul class="tribal-locations">
+                        <li><i class="fas fa-circle" style="color: #e74c3c;"></i> <strong>Reguibat es-Sahel :</strong> Zone côtière atlantique</li>
+                        <li><i class="fas fa-circle" style="color: #3498db;"></i> <strong>Reguibat el-Gharb :</strong> Intérieur nord (Laâyoune-Smara)</li>
+                        <li><i class="fas fa-circle" style="color: #2ecc71;"></i> <strong>Reguibat ech-Charg :</strong> Zone orientale</li>
+                        <li><i class="fas fa-circle" style="color: #f39c12;"></i> <strong>Oulad Delim :</strong> Région de Dakhla</li>
+                        <li><i class="fas fa-circle" style="color: #9b59b6;"></i> <strong>Izarguien :</strong> Smara et oasis environnantes</li>
+                    </ul>
+                    
+                    <p style="margin-top: 1.5rem; font-style: italic; color: #666;">
+                        <i class="fas fa-exclamation-circle"></i> Les frontières tribales étaient fluides et saisonnières, basées sur les mouvements de nomadisation et les accords traditionnels.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Contexte -->
+    <section id="context">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-globe-africa"></i>
+                </div>
+                <h2>Contexte et Justification</h2>
+            </div>
+            
+            <div class="card">
+                <p>Le Sahara Occidental possède un patrimoine documentaire unique, marqué par une période coloniale espagnole (1884-1975) suivie d'une situation politique complexe. Ce projet répond à un besoin urgent de préservation des archives généalogiques menacées de disparition et à une demande croissante de la diaspora sahraouie pour retrouver ses racines familiales.</p>
+                <br>
+                <p>L'initiative s'aligne parfaitement avec la mission de FamilySearch de préserver la mémoire familiale mondiale et de rendre accessible l'héritage généalogique de toutes les cultures.</p>
+                <br>
+                <p><strong>Enjeux principaux :</strong></p>
+                <ul style="margin-left: 2rem; margin-top: 1rem;">
+                    <li>91 ans d'archives coloniales espagnoles à préserver</li>
+                    <li>Tradition orale en voie de disparition</li>
+                    <li>Structures tribales complexes à documenter</li>
+                    <li>Besoins de la diaspora pour la reconstruction identitaire</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Objectifs -->
+    <section id="objectives">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <h2>Objectifs Principaux</h2>
+            </div>
+            
+            <div class="card">
+                <ul class="objective-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>Préserver, numériser et rendre accessible</strong> le patrimoine généalogique sahraouien - 500.000 pages d'archives coloniales
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>Collecter et traiter systématiquement</strong> les archives coloniales et les traditions orales - 1.000 heures d'enregistrements
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>Établir des partenariats institutionnels durables</strong> avec les archives internationales - 15 partenariats stratégiques
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>Former des chercheurs locaux</strong> aux méthodes de préservation généalogique - 50 chercheurs certifiés
+                        </div>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>Créer une base de données exhaustive</strong> des familles sahraouies - 5.000 arbres généalogiques reconstitués
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Sources -->
+    <section id="sources">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-archive"></i>
+                </div>
+                <h2>Sources Archivistiques Détailées</h2>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-flag card-icon"></i> Archives Espagnoles (Période coloniale 1884-1975)</h3>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Catégorie</th>
+                            <th>Période</th>
+                            <th>Contenu Généalogique</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Fonds Sahara Español</strong></td>
+                            <td>1885-1975</td>
+                            <td>350 mètres linéaires de documents</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Série Gouvernements Généraux</strong></td>
+                            <td>1946-1975</td>
+                            <td>Correspondance officielle, statuts d'autonomie</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Série Affaires Indigènes</strong></td>
+                            <td>1934-1975</td>
+                            <td>Recensements tribaux (1945, 1954, 1960, 1974)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Série Éducation</strong></td>
+                            <td>1947-1975</td>
+                            <td>Registres scolaires, listes de boursiers</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Série Santé</strong></td>
+                            <td>1949-1975</td>
+                            <td>Registres hospitaliers, statistiques démographiques</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <p style="margin-top: 1.5rem;"><i class="fas fa-map-pin"></i> <strong>Localisation :</strong> Archivo General de la Administración, Alcalá de Henares, Madrid</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Structure Tribale -->
+    <section id="tribes">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h2>Structure Tribale Documentée</h2>
+            </div>
+            
+            <div class="tribes-container">
+                <div class="tribe-card">
+                    <h4><i class="fas fa-users"></i> Confédération des Reguibat</h4>
+                    <p style="color: #666; margin-bottom: 1rem;">La plus grande confédération tribale sahraouie</p>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt" style="color: #e74c3c;"></i> <strong>Reguibat es-Sahel :</strong> Zone littorale, 12.000 membres (1974)</li>
+                        <li><i class="fas fa-map-marker-alt" style="color: #3498db;"></i> <strong>Reguibat el-Gharb :</strong> Intérieur nord, 18.000 membres</li>
+                        <li><i class="fas fa-map-marker-alt" style="color: #2ecc71;"></i> <strong>Reguibat ech-Charg :</strong> Est, 20.000 membres</li>
+                    </ul>
+                </div>
+                
+                <div class="tribe-card">
+                    <h4><i class="fas fa-user-friends"></i> Tribu des Oulad Delim</h4>
+                    <p style="color: #666; margin-bottom: 1rem;">Deuxième grande tribu, spécialisée dans le commerce caravanier</p>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt" style="color: #f39c12;"></i> <strong>Oulad Bou Sbaa :</strong> Zone de Dakhla</li>
+                        <li><i class="fas fa-map-marker-alt" style="color: #f39c12;"></i> <strong>Oulad El Kharachi :</strong> Guides caravaniers</li>
+                        <li><i class="fas fa-map-marker-alt" style="color: #f39c12;"></i> <strong>Oulad Mhand :</strong> Branche maraboutique</li>
+                    </ul>
+                </div>
+                
+                <div class="tribe-card">
+                    <h4><i class="fas fa-mosque"></i> Tribus Maraboutiques</h4>
+                    <p style="color: #666; margin-bottom: 1rem;">Autorités religieuses et gardiennes de la tradition</p>
+                    <ul>
+                        <li><i class="fas fa-star" style="color: #9b59b6;"></i> <strong>Izarguien :</strong> Gardiens de la zawiya de Smara</li>
+                        <li><i class="fas fa-book" style="color: #34495e;"></i> <strong>Oulad Tidrarin :</strong> Enseignants coraniques</li>
+                        <li><i class="fas fa-network-wired" style="color: #1abc9c;"></i> <strong>Arosien :</strong> Réseau soufi transnational</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Méthodologie -->
+    <section id="methodology">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h2>Méthodologie de Traitement</h2>
+            </div>
+            
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><i class="fas fa-map-marked-alt"></i> Phase 1 : Identification et Localisation</h4>
+                        <p>Cartographie complète des fonds d'archives, évaluation de l'état de conservation, négociation des droits de numérisation avec les institutions détentrices.</p>
+                        <p style="margin-top: 0.5rem; color: #666;"><i class="fas fa-clock"></i> <strong>Durée estimée :</strong> 4 mois</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><i class="fas fa-digital-tachograph"></i> Phase 2 : Numérisation et Préservation</h4>
+                        <p>Numérisation haute résolution (600 DPI), création de métadonnées descriptives, sauvegarde sur supports multiples avec triple redondance.</p>
+                        <p style="margin-top: 0.5rem; color: #666;"><i class="fas fa-clock"></i> <strong>Durée estimée :</strong> 8 mois</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><i class="fas fa-list-alt"></i> Phase 3 : Indexation et Transcription</h4>
+                        <p>Indexation nominative exhaustive, transcription des documents manuscrits, traduction des textes en arabe hassaniyya et langues coloniales.</p>
+                        <p style="margin-top: 0.5rem; color: #666;"><i class="fas fa-clock"></i> <strong>Durée estimée :</strong> 12 mois</p>
+                    </div>
+                </div>
+                
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <h4><i class="fas fa-database"></i> Phase 4 : Intégration et Croisement</h4>
+                        <p>Intégration dans la base de données FamilySearch, croisement des sources écrites et orales, validation des informations généalogiques par comité scientifique.</p>
+                        <p style="margin-top: 0.5rem; color: #666;"><i class="fas fa-clock"></i> <strong>Durée estimée :</strong> 8 mois</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Partenariats -->
+    <section id="partnerships">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <h2>Partenariats Requis</h2>
+            </div>
+            
+            <div class="partners-grid">
+                <div class="partner-card">
+                    <div class="partner-icon">
+                        <i class="fas fa-landmark"></i>
+                    </div>
+                    <h4>Institutionnels</h4>
+                    <p>Ministère espagnol de la Culture (AGA), Archives Royales du Maroc, Nations Unies, Université de Nouakchott</p>
+                    <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;"><i class="fas fa-check-circle" style="color: #27ae60;"></i> 3 accords signés</p>
+                </div>
+                
+                <div class="partner-card">
+                    <div class="partner-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h4>Académiques</h4>
+                    <p>Centre National de la Recherche Scientifique (France), Consejo Superior de Investigaciones Científicas (Espagne), instituts d'études africaines européens</p>
+                    <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;"><i class="fas fa-check-circle" style="color: #27ae60;"></i> 5 collaborations actives</p>
+                </div>
+                
+                <div class="partner-card">
+                    <div class="partner-icon">
+                        <i class="fas fa-hands-helping"></i>
+                    </div>
+                    <h4>Associatifs</h4>
+                    <p>Associations de la diaspora sahraouie, organisations de défense du patrimoine, centres culturels régionaux, fondations philanthropiques</p>
+                    <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;"><i class="fas fa-check-circle" style="color: #27ae60;"></i> 7 partenaires identifiés</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section Innovations -->
+    <section id="innovations">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <h2>Innovations Techniques</h2>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-cogs card-icon"></i> Système d'Indexation Adapté</h3>
+                <p>Reconnaissance des noms arabes transcrits en espagnol, gestion des structures tribales complexes, liens entre sources écrites et tradition orale.</p>
+                <p style="margin-top: 1rem; color: #666;"><i class="fas fa-microchip"></i> <strong>Technologies :</strong> OCR adaptatif, IA pour la reconnaissance de motifs, bases de données graphes</p>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-laptop-code card-icon"></i> Plateforme Collaborative</h3>
+                <p>Interface multilingue (arabe, espagnol, français, anglais), outils de recherche avancée, fonctionnalités de contribution communautaire.</p>
+                <p style="margin-top: 1rem; color: #666;"><i class="fas fa-globe"></i> <strong>Accessibilité :</strong> Conforme WCAG 2.1, responsive design, mode hors-ligne</p>
+            </div>
+            
+            <div class="card">
+                <h3><i class="fas fa-shield-alt card-icon"></i> Technologies de Préservation</h3>
+                <p>Numérisation 3D des documents fragiles, reconnaissance optique de caractères adaptée, stockage cloud sécurisé avec blockchain pour l'intégrité.</p>
+                <p style="margin-top: 1rem; color: #666;"><i class="fas fa-database"></i> <strong>Archivage :</strong> Triple redondance, migration périodique, métadonnées Dublin Core</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <h3 style="color: white; margin-bottom: 1.5rem;">Projet de Recherche Généalogique Sahraouie</h3>
+                <p style="opacity: 0.9;">Ce projet représente une opportunité unique de sauvegarder la mémoire généalogique sahraouie tout en établissant de nouveaux standards pour la préservation des archives dans les contextes post-coloniaux et conflictuels.</p>
+                
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-building"></i>
+                        <span>FamilySearch International</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Responsable : Karim Assoud</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Projet 2024-2027</span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="saharawi-flag" style="width: 60px; height: 40px;"></div>
+                        <span>Drapeau de la République Arabe Sahraouie Démocratique</span>
+                    </div>
+                </div>
+                
+                <div class="copyright">
+                    <p>&copy; 2024 Projet de Recherche Généalogique Sahraouie - FamilySearch International. Tous droits réservés.</p>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem;">Les informations présentées sont basées sur des recherches historiques et archivistiques documentées.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bibliothèque Leaflet pour la carte -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Initialisation de la carte
+        document.addEventListener('DOMContentLoaded', function() {
+            // Coordonnées du Sahara Occidental
+            const map = L.map('saharaMap').setView([24.5, -13], 6);
+            
+            // Ajout de la couche de tuiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Définition des zones tribales (coordonnées approximatives)
+            const tribalZones = [
+                {
+                    name: "Reguibat es-Sahel",
+                    color: "#e74c3c",
+                    coordinates: [
+                        [27.0, -16.0],
+                        [26.0, -15.0],
+                        [25.0, -14.5],
+                        [24.0, -14.0],
+                        [23.5, -13.5],
+                        [24.5, -12.5],
+                        [26.0, -13.0],
+                        [27.0, -14.0]
+                    ],
+                    population: "12.000 membres (1974)"
+                },
+                {
+                    name: "Reguibat el-Gharb",
+                    color: "#3498db",
+                    coordinates: [
+                        [27.5, -12.0],
+                        [26.5, -11.5],
+                        [25.5, -12.0],
+                        [24.5, -12.5],
+                        [25.0, -13.5],
+                        [26.0, -14.0],
+                        [27.0, -13.5],
+                        [27.8, -12.5]
+                    ],
+                    population: "18.000 membres"
+                },
+                {
+                    name: "Reguibat ech-Charg",
+                    color: "#2ecc71",
+                    coordinates: [
+                        [25.5, -11.0],
+                        [24.0, -10.0],
+                        [23.0, -9.5],
+                        [22.0, -9.0],
+                        [21.5, -10.0],
+                        [22.0, -11.5],
+                        [23.0, -12.0],
+                        [24.5, -12.0]
+                    ],
+                    population: "20.000 membres"
+                },
+                {
+                    name: "Oulad Delim",
+                    color: "#f39c12",
+                    coordinates: [
+                        [23.0, -17.0],
+                        [22.5, -16.0],
+                        [23.5, -15.5],
+                        [24.0, -16.5],
+                        [23.5, -17.5]
+                    ],
+                    population: "Zone de Dakhla"
+                },
+                {
+                    name: "Izarguien",
+                    color: "#9b59b6",
+                    coordinates: [
+                        [26.7, -11.4],
+                        [26.5, -11.2],
+                        [26.3, -11.6],
+                        [26.5, -11.8],
+                        [26.7, -11.6]
+                    ],
+                    population: "Smara et oasis"
+                }
+            ];
+            
+            // Ajout des zones tribales sur la carte
+            tribalZones.forEach(zone => {
+                const polygon = L.polygon(zone.coordinates, {
+                    color: zone.color,
+                    fillColor: zone.color,
+                    fillOpacity: 0.3,
+                    weight: 2
+                }).addTo(map);
+                
+                // Calcul du centre de la zone pour positionner le popup
+                const center = zone.coordinates.reduce((acc, coord) => {
+                    return [acc[0] + coord[0], acc[1] + coord[1]];
+                }, [0, 0]).map(sum => sum / zone.coordinates.length);
+                
+                // Ajout du popup
+                polygon.bindPopup(`
+                    <div style="padding: 10px;">
+                        <h4 style="margin: 0 0 10px 0; color: ${zone.color};">${zone.name}</h4>
+                        <p><strong>Population :</strong> ${zone.population}</p>
+                        <p><strong>Type :</strong> ${zone.name.includes('Reguibat') ? 'Confédération guerrière' : zone.name.includes('Oulad') ? 'Tribu commerçante' : 'Tribu maraboutique'}</p>
+                        <p><strong>Documentation :</strong> Archives espagnoles (1945-1974)</p>
+                    </div>
+                `);
+                
+                // Ajout d'un marqueur au centre de la zone
+                L.marker(center, {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: `<div style="background-color: ${zone.color}; color: white; padding: 5px 10px; border-radius: 10px; font-weight: bold;">${zone.name.split(' ')[0]}</div>`,
+                        iconSize: [100, 40]
+                    })
+                }).addTo(map);
+            });
+            
+            // Ajout des villes principales
+            const cities = [
+                { name: "Laâyoune", coords: [27.15, -13.20], importance: "Capitale administrative" },
+                { name: "Dakhla", coords: [23.70, -15.95], importance: "Port principal" },
+                { name: "Smara", coords: [26.74, -11.67], importance: "Centre religieux" },
+                { name: "Boujdour", coords: [26.13, -14.48], importance: "Port de pêche" }
+            ];
+            
+            cities.forEach(city => {
+                L.marker(city.coords).addTo(map)
+                    .bindPopup(`
+                        <div style="padding: 10px;">
+                            <h4 style="margin: 0 0 5px 0;">${city.name}</h4>
+                            <p><strong>Rôle :</strong> ${city.importance}</p>
+                            <p><strong>Archives disponibles :</strong> Registres municipaux, écoles, hôpitaux</p>
+                        </div>
+                    `);
+            });
+            
+            // Ajout de la légende
+            const legend = L.control({ position: 'bottomright' });
+            
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'map-legend');
+                let labels = ['<strong>Légende des Tribus</strong>'];
+                
+                tribalZones.forEach(zone => {
+                    labels.push(`
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: ${zone.color};"></div>
+                            <span>${zone.name}</span>
+                        </div>
+                    `);
+                });
+                
+                labels.push('<div class="legend-item"><i class="fas fa-map-marker-alt"></i> Villes principales</div>');
+                
+                div.innerHTML = labels.join('');
+                return div;
+            };
+            
+            legend.addTo(map);
+            
+            // Animation des cartes au défilement
+            const cards = document.querySelectorAll('.card, .tribe-card, .partner-card');
+            const timelineItems = document.querySelectorAll('.timeline-content');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+            
+            timelineItems.forEach(item => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(-30px)';
+                item.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(item);
+            });
+            
+            // Animation pour les éléments de la section map
+            const mapElements = document.querySelectorAll('.map-info, #saharaMap');
+            mapElements.forEach(element => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+                element.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                observer.observe(element);
+            });
+        });
+    </script>
+</body>
+</html>
